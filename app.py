@@ -36,7 +36,7 @@ with st.sidebar:
         api_key = st.text_input("Gemini API Key ကိုထည့်ပါ", type="password")
         voice_option = st.selectbox(
             "AI အသံရွေးချယ်ပါ",
-            ["my-MM-ThihaNeural (အမျိုးသား)", "my-MM-NwayNeural (အမျိုးသမီး)"]
+            ["my-MM-ThihaNeural (अမျိုးသား)", "my-MM-NwayNeural (အမျိုးသမီး)"]
         )
         voice_name = voice_option.split(" ")[0]
 
@@ -68,7 +68,7 @@ def process_advanced_video(video_path, bgm_path, output_path):
             # Cloud နှင့် ကိုက်ညီသော ဖွဲ့စည်းမှုပုံစံဖြင့် ချိတ်ဆက်ခြင်း
             genai.configure(api_key=api_key)
             
-            # (A) ဗီဒီယိုကို Gemini API ထံ Upload တင်ခြင်း (genai မှ တိုက်ရိုက်ခေါ်ရန် ပြင်ဆင်ပြီး)
+            # (A) ဗီဒီယိုကို Gemini API ထံ Upload တင်ခြင်း
             with st.spinner("🔄 AI ထံ ဗီဒီယို ပေးပို့ပြီး ခွဲခြမ်းစိတ်ဖြာနေပါသည်..."):
                 video_file = genai.upload_file(path=video_path)
                 while video_file.state.name == "PROCESSING":
@@ -99,6 +99,7 @@ def process_advanced_video(video_path, bgm_path, output_path):
             st.error(f"⚠️ AI စနစ်တွင် Error တက်သွားပါသည် (Key မမှန်ပါက ဖြစ်နိုင်သည်) - {ai_err}")
 
     # ၄။ Segment Cut Processing (နဂိုရှိပြီးသား Copyright-Free Cut စနစ်)
+    # --- ERROR ပြင်ဆင်ချက်- variable များကို Loop မပတ်ခင် သေချာကြေညာပေးထားပါသည် ---
     segments = []
     interval = 4
     freeze_dur = 0.5
