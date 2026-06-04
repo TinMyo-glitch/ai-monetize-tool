@@ -1,2 +1,5 @@
 streamlit
 moviepy
+google-genai
+edge-tts
+nest_asyncio
