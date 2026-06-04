@@ -6,8 +6,6 @@ from moviepy import VideoFileClip, AudioFileClip, concatenate_videoclips, Compos
 import os
 import time
 import nest_asyncio
-import tkinter as tk
-from tkinter import filedialog
 
 # Asyncio Error ကာကွယ်ရန်
 nest_asyncio.apply()
@@ -15,7 +13,7 @@ nest_asyncio.apply()
 st.set_page_config(page_title="AI Ultra Recap - PC Monetization Pro", layout="centered")
 
 st.title("🛡️ AI Ultra Recap - PC Monetization Pro (Local Edition)")
-st.write("PC ပေါ်တွင် ဗီဒီယိုဖိုင်ဆိုဒ် အကြီးကြီးများကို Error လုံးဝမရှိဘဲ အမြန်ဆုံး Render ဆင်းနိုင်ရန် ဖန်တီးထားပါသည်။")
+st.write("PC ပေါ်တွင် ဗီဒီယိုဖိုင်များကို Error လုံးဝမရှိဘဲ တိုက်ရိုက် လမ်းကြောင်းဖြင့် အမြန်ဆုံး Render ပြုလုပ်ရန် စနစ် ဖြစ်ပါသည်။")
 
 # --- SIDEBAR PROPERTIES ---
 with st.sidebar:
@@ -41,30 +39,15 @@ with st.sidebar:
         )
         voice_name = voice_option.split(" ")[0]
 
-# --- FILE SELECTION USING NATIVE WINDOWS DIALOG ---
-st.header("📂 Select Files From PC")
+# --- DIRECT FILE PATH INPUT (ERROR-FREE METHOD) ---
+st.header("📂 PC ထဲရှိ ဖိုင်လမ်းကြောင်းကို ထည့်သွင်းပါ")
+st.caption("ဥပမာထည့်ရမည့်ပုံစံ - D:\\Videos\\movie.mp4")
 
-# ဗီဒီယိုဖိုင်ရွေးရန် ခလုတ်
-video_path = st.text_input("ဗီဒီယိုဖိုင်လမ်းကြောင်း (သို့မဟုတ် အောက်ကခလုတ်ဖြင့် ရွေးပါ)", "")
-if st.button("📁 Browse Video File"):
-    root = tk.Tk()
-    root.withdraw()
-    root.attributes('-topmost', True) # Window ကို အပေါ်ဆုံးမှာ ပြရန်
-    selected_video = filedialog.askopenfilename(filetypes=[("Video Files", "*.mp4 *.mov")])
-    if selected_video:
-        video_path = selected_video
-        st.success(f"ရွေးချယ်ပြီး - {video_path}")
+# ဗီဒီယိုလမ်းကြောင်း ရိုက်ထည့်ရန်နေရာ
+video_path = st.text_input("🎬 ဗီဒီယိုဖိုင်လမ်းကြောင်း (Absolute Path) ကိုထည့်ပါ", "")
 
-# BGM ဖိုင်ရွေးရန် ခလုတ်
-bgm_path = st.text_input("နောက်ခံ BGM ဖိုင်လမ်းကြောင်း (လိုအပ်မှသာ ခလုတ်ဖြင့်ရွေးပါ)", "")
-if st.button("🎵 Browse BGM File"):
-    root = tk.Tk()
-    root.withdraw()
-    root.attributes('-topmost', True)
-    selected_bgm = filedialog.askopenfilename(filetypes=[("Audio Files", "*.mp3 *.wav")])
-    if selected_bgm:
-        bgm_path = selected_bgm
-        st.success(f"ရွေးချယ်ပြီး - {bgm_path}")
+# BGM လမ်းကြောင်း ရိုက်ထည့်ရန်နေရာ
+bgm_path = st.text_input("🎵 နောက်ခံ BGM ဖိုင်လမ်းကြောင်း (မလိုလျှင် အလွတ်ထားပါ)", "")
 
 # --- AI TTS Helper ---
 async def generate_voiceover(text, output_audio_path, voice):
@@ -173,13 +156,17 @@ if video_path:
         st.sidebar.warning("⚠️ AI စနစ်သုံးရန် API Key ထည့်ပါ။")
     else:
         if st.button("🚀 Start Process Movie Recap", type="primary"):
-            if os.path.exists(video_path):
-                output_f = os.path.join(os.path.dirname(video_path), "monetize_pro_output.mp4")
+            # Windows အတွက် မျဉ်းစောင်းပြဿနာ ညှိနှိုင်းခြင်း
+            clean_v_path = video_path.strip().replace('"', '').replace("'", "")
+            clean_b_path = bgm_path.strip().replace('"', '').replace("'", "") if bgm_path else None
+            
+            if os.path.exists(clean_v_path):
+                output_f = os.path.join(os.path.dirname(clean_v_path), "monetize_pro_output.mp4")
                 try:
                     with st.spinner("🎬 PC စွမ်းဆောင်ရည်ဖြင့် ဗီဒီယိုကို အမြန်ဆုံး Render လုပ်နေပါသည်..."):
-                        process_advanced_video(video_path, bgm_path if bgm_path else None, output_f)
+                        process_advanced_video(clean_v_path, clean_b_path, output_f)
                     st.success(f"🎉 အောင်မြင်စွာ ပြုပြင်ပြီးပါပြီ။ ဗီဒီယိုကို အောက်ပါလမ်းကြောင်းတွင် သွားရောက်ယူနိုင်ပါသည် -\n{output_f}")
                 except Exception as e:
                     st.error(f"Error တက်သွားပါသည်: {e}")
             else:
-                st.error("❌ ပေးထားသော ဗီဒီယိုဖိုင်လမ်းကြောင်း မှားယွင်းနေပါသည်။")
+                st.error("❌ ပေးထားသော ဗီဒီယိုဖိုင်လမ်းကြောင်းကို ရှာမတွေ့ပါ။ စာလုံးပေါင်း ပြန်စစ်ပေးပါ။")
