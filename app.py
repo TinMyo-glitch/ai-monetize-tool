@@ -68,7 +68,7 @@ def process_advanced_video(video_path, bgm_path, output_path):
             # Cloud နှင့် ကိုက်ညီသော ဖွဲ့စည်းမှုပုံစံဖြင့် ချိတ်ဆက်ခြင်း
             genai.configure(api_key=api_key)
             
-            # (A) ဗီဒီယိုကို Gemini API ထံ Upload တင်ခြင်း
+            # (A) ဗီဒီယိုကို Gemini API ထံ Upload တင်ခြင်း (genai မှ တိုက်ရိုက်ခေါ်ရန် ပြင်ဆင်ပြီး)
             with st.spinner("🔄 AI ထံ ဗီဒီယို ပေးပို့ပြီး ခွဲခြမ်းစိတ်ဖြာနေပါသည်..."):
                 video_file = genai.upload_file(path=video_path)
                 while video_file.state.name == "PROCESSING":
@@ -132,3 +132,66 @@ def process_advanced_video(video_path, bgm_path, output_path):
         if final_audio.duration > final_clip.duration:
             final_audio = final_audio.subclipped(0, final_clip.duration)
     else:
+        # AI ပိတ်ထားရင် မူရင်းဗီဒီယိုအသံကိုပဲ သုံးမည်
+        final_audio = final_clip.audio
+        if final_audio is not None and pitch_shift:
+            final_audio = final_audio.with_fps(final_audio.fps * 1.02)
+
+    # ၆။ BGM (နောက်ခံတေးဂီတ) Logic
+    if final_audio is not None and bgm_path:
+        bgm = AudioFileClip(bgm_path)
+        if bgm.duration < final_clip.duration:
+            bgm = bgm.with_effects([afx.AudioLoop(duration=final_clip.duration)])
+        else:
+            bgm = bgm.subclipped(0, final_clip.duration)
+        bgm = bgm.transform(lambda get_frame, t: get_frame(t) * 0.1) # Volume 10%
+        final_audio = CompositeAudioClip([final_audio, bgm])
+
+    if final_audio is not None:
+        final_clip = final_clip.with_audio(final_audio)
+
+    # Resolution Check (width divisible by 2 error ကာကွယ်ရန်)
+    new_w, new_h = final_clip.w, final_clip.h
+    if new_w % 2 != 0: new_w -= 1
+    if new_h % 2 != 0: new_h -= 1
+    final_clip = final_clip.resized(new_size=(new_w, new_h))
+
+    # ၇။ Output File ရေးသားခြင်း
+    final_clip.write_videofile(
+        output_path, 
+        fps=fps, 
+        codec="libx264", 
+        audio_codec="aac",
+        pixel_format="yuv420p",
+        ffmpeg_params=["-profile:v", "main", "-level", "3.1"],
+        temp_audiofile="temp-audio-render.m4a",
+        remove_temp=True
+    )
+    clip.close()
+
+# --- UI LOGIC ---
+if uploaded_video is not None:
+    if enable_ai_script and not api_key:
+        st.sidebar.warning("⚠️ AI Feature ကိုသုံးရန် Sidebar တွင် Gemini API Key ထည့်ပေးပါရန်။")
+    else:
+        if st.button("Generate Ultra Copyright-Free Video", type="primary"):
+            with st.spinner("ဗီဒီယိုကို အဆင့်မြှင့်တင်နေပါသည်..."):
+                with open("temp_vid.mp4", "wb") as f:
+                    f.write(uploaded_video.getbuffer())
+                
+                bgm_p = None
+                if uploaded_bgm:
+                    bgm_p = "temp_bgm.mp3"
+                    with open(bgm_p, "wb") as f:
+                        f.write(uploaded_bgm.getbuffer())
+                
+                output_f = "ultra_recap_final.mp4"
+                try:
+                    process_advanced_video("temp_vid.mp4", bgm_p, output_f)
+                    
+                    # ဒေါင်းလုဒ်ဆွဲရန် ခလုတ်ပြသခြင်း
+                    with open(output_f, "rb") as f:
+                        st.download_button("🎬 ဗီဒီယိုဒေါင်းလုဒ်ဆွဲရန်", f, file_name="monetize_pro.mp4")
+                    st.success("အောင်မြင်စွာ ပြုပြင်ပြီးပါပြီ။")
+                except Exception as e:
+                    st.error(f"Error တက်သွားပါသည်: {e}")
