@@ -36,7 +36,7 @@ with st.sidebar:
         api_key = st.text_input("Gemini API Key ကိုထည့်ပါ", type="password")
         voice_option = st.selectbox(
             "AI အသံရွေးချယ်ပါ",
-            ["my-MM-ThihaNeural (अမျိုးသား)", "my-MM-NwayNeural (အမျိုးသမီး)"]
+            ["my-MM-ThihaNeural (အမျိုးသား)", "my-MM-NwayNeural (အမျိုးသမီး)"]
         )
         voice_name = voice_option.split(" ")[0]
 
@@ -86,7 +86,7 @@ def process_advanced_video(video_path, bgm_path, output_path):
                 response = model.generate_content([video_file, prompt])
                 script_text = response.text
                 
-                # ရလာတဲ့ Script ကို UI မှာ ပြသခြင်း
+                # ရလာတဲ့ Script ကို UI မှာ ပြသခြင်း (Error မတက်စေရန် try အောက်ထဲ စနစ်တကျထည့်သွင်းထားသည်)
                 st.subheader("📝 AI ရေးသားလိုက်သော ဇာတ်ညွှန်း")
                 st.info(script_text)
             
@@ -99,7 +99,6 @@ def process_advanced_video(video_path, bgm_path, output_path):
             st.error(f"⚠️ AI စနစ်တွင် Error တက်သွားပါသည် (Key မမှန်ပါက ဖြစ်နိုင်သည်) - {ai_err}")
 
     # ၄။ Segment Cut Processing (နဂိုရှိပြီးသား Copyright-Free Cut စနစ်)
-    # --- ERROR ပြင်ဆင်ချက်- variable များကို Loop မပတ်ခင် သေချာကြေညာပေးထားပါသည် ---
     segments = []
     interval = 4
     freeze_dur = 0.5
@@ -151,7 +150,7 @@ def process_advanced_video(video_path, bgm_path, output_path):
     if final_audio is not None:
         final_clip = final_clip.with_audio(final_audio)
 
-    # Resolution Check (width divisible by 2 error ကာကွယ်ရန်)
+    # Resolution Check (width divisible by 2 error ကာکွယ်ရန်)
     new_w, new_h = final_clip.w, final_clip.h
     if new_w % 2 != 0: new_w -= 1
     if new_h % 2 != 0: new_h -= 1
